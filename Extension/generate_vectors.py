@@ -93,11 +93,13 @@ def train_steering_vector(
         model_name_path=model.model_name,
     )
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=custom_collate)
+    loss_arr = []
 
     for layer in layers:
         steering_vector = nn.Parameter(torch.zeros(model.model.config.hidden_size, device=model.device))
-        optimizer = optim.Adam([steering_vector], lr=learning_rate)
+        optimizer = optim.AdamW([steering_vector], lr=learning_rate)
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=lr_step_size, gamma=lr_gamma)
+        multiplier = 1
 
         for epoch in range(num_epochs):
             total_loss = 0
@@ -123,7 +125,7 @@ def train_steering_vector(
                     rel_log_neg = steered_log_prob_neg - base_log_prob_neg
                     rel_log_pos = steered_log_prob_pos - base_log_prob_pos
                     logits = rel_log_pos - rel_log_neg
-                    multiplier = random.uniform(-1, 1)
+
                     logits = multiplier * beta * logits
 
                     loss = -torch.mean(F.logsigmoid(logits))
@@ -136,11 +138,14 @@ def train_steering_vector(
 
             scheduler.step()
             print(f"Layer {layer}, Epoch {epoch+1}, Average Loss: {total_loss / len(dataloader)}")
+            loss_arr.append(total_loss / len(dataloader))
             print(f"Current LR: {scheduler.get_last_lr()}")
 
         save_path = get_vector_path(behavior, layer, model.model_name)
         torch.save(steering_vector.detach().cpu(), save_path)
         print(f"Saved steering vector for layer {layer} to {save_path}")
+
+    print(loss_arr)
 
 def generate_trainable_steering_vectors(args):
     model = LlamaWrapper(cache_dir=args.cache_dir, model_name=args.model_name)
