@@ -22,7 +22,7 @@ def load_steering_vector(behavior, layer, model_name, pathname = None):
 def process_item(item, model, steering_vector, layer, multiplier):
     question = item["question"]
     model.reset_all()
-    model.set_add_activations(layer, multiplier * steering_vector)
+    model.set_add_activations(layer, -multiplier * steering_vector)
     model_output = model.generate_text(user_input=question, max_new_tokens=100)
 
     result = {

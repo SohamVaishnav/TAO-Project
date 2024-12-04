@@ -116,7 +116,7 @@ def train_steering_vector(
                     base_log_prob_neg = torch.log_softmax(base_logits_neg, dim=-1)
 
                     model.reset_all()
-                    model.set_add_activations(layer, steering_vector)
+                    model.set_add_activations(layer, -steering_vector)
                     steered_logits_pos = model.get_logits(p_tokens)
                     steered_logits_neg = model.get_logits(n_tokens)
                     steered_log_prob_pos = torch.log_softmax(steered_logits_pos, dim=-1)
